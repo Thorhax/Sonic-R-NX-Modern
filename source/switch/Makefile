@@ -12,7 +12,7 @@ SWITCH_SRCDIR := src
 SDL_SRCDIR    := ../sdl/src
 
 APP_TITLE     := Sonic R
-APP_AUTHOR    := jnmartin84 / Antigravity
+APP_AUTHOR    := Thorhax
 APP_VERSION   := 1.0.0
 ICON          := icon.jpg
 
