@@ -1,5 +1,7 @@
 # Sonic R NX Modern (Nintendo Switch Port)
 
+**Author:** Thorhax
+
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20me-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/thorhax)
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Support%20me-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/c/Thorhax)
 [![GitHub Release](https://img.shields.io/github/v/release/Thorhax/Sonic-R-NX-Modern?include_prereleases&color=blue)](https://github.com/Thorhax/Sonic-R-NX-Modern/releases)
