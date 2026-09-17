@@ -13,7 +13,7 @@ SDL_SRCDIR    := ../sdl/src
 
 APP_TITLE     := Sonic R
 APP_AUTHOR    := Thorhax
-APP_VERSION   := 1.0.0
+APP_VERSION   := 1.0.1
 ICON          := icon.jpg
 
 # Files in sdl/src that Switch replaces
