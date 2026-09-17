@@ -440,6 +440,9 @@ void InitOptionsMenuPage(int pageIndex, int basePos)  /* EAX, EDX */
 
     int start = s_optPageItems[pageIndex][0];
     int length = s_optPageItems[pageIndex][1];
+#ifdef __SWITCH__
+    if (pageIndex == 0) length = 6;
+#endif
 
     g_optMenuCursor = basePos + start;
     g_optMenuMaxItem = length;
@@ -620,6 +623,9 @@ static int IsDisabledGraphicsItem(int itemIndex)
  * ===================================================================== */
 static void DrawOptionItem(int xPos, int itemIndex)
 {
+#ifdef __SWITCH__
+    if (g_optCurrentPage == 0 && itemIndex == 6) itemIndex = 7;
+#endif
     if (IsDisabledGraphicsItem(itemIndex)) {
         return;
     }
@@ -1582,7 +1588,13 @@ int OptionsMenuScreen(void)
                             lastTime = timeGetTime() / 1000;
                             break;
                         case 6: /* Exit to Windows → confirm page — 0x49466d */
-#ifdef SONICR_DC
+#ifdef __SWITCH__
+                            /* Switch item 6 is Back (the Windows-only Exit row is removed). */
+                            PlaySoundEffect(2, 0, 0);
+                            g_optMenuReturnCode = 1;
+                            g_fadeState = FADE_OUT;
+                            break;
+#elif defined(SONICR_DC)
                             /* No host desktop on DC; the row is blank and inert
                              * (see DrawOptionItem). Cursor still lands on it. */
                             break;

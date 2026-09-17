@@ -303,6 +303,33 @@ static int s_clientKeyframeCountdown;
 
 #define KEYFRAME_INTERVAL 30
 
+/* Backport of upstream issue #13 fix: a remote character change must update
+ * both gameplay charId and the renderer's model selector. If an animation
+ * stream is already live, re-seed it from the new character's table. */
+static void net_apply_char_id(int slot, short charId)
+{
+    Player *pl = &g_playerBase[slot];
+
+    if (pl->charId == charId && pl->_unk_0x1E0 == charId) return;
+
+    pl->charId = charId;
+    pl->_unk_0x1E0 = charId;
+
+    if (slot < 10 && g_animDataPtrs[slot] != NULL && g_charAnimTables != NULL) {
+        void **tables = (void **)g_charAnimTables;
+        uintptr_t *animPtrs = (uintptr_t *)tables[charId * 2];
+        int animCount = (int)(uintptr_t)tables[charId * 2 + 1];
+        int animIdx = pl->animId;
+
+        g_animDataPtrs[slot] = NULL;
+        if (animPtrs != NULL && animIdx >= 0 && animIdx < animCount) {
+            uintptr_t frameAddr = animPtrs[animIdx];
+            if (frameAddr == 0 && animIdx + 1 < animCount) frameAddr = animPtrs[animIdx + 1];
+            g_animDataPtrs[slot] = (const short *)frameAddr;
+        }
+    }
+}
+
 static void NetSnapshotReset(void)
 {
     int i;
@@ -1702,10 +1729,10 @@ void ApplyNetworkPlayerState(void)
                                 (int)cid, k);
                         continue;
                     }
-                    g_playerBase[k].charId = cid;
+                    net_apply_char_id(k, cid);
                 }
                 /* Restore local player's own pick */
-                g_playerBase[g_localPlayerIndex].charId = g_menuPlayer.charId;
+                net_apply_char_id(g_localPlayerIndex, g_menuPlayer.charId);
             }
 
             /* Populate decoration table.  Real names should already be in
@@ -1756,7 +1783,7 @@ void ApplyNetworkPlayerState(void)
                 continue;
             }
             if (slot >= 0 && slot < NET_MAX_PLAYERS) {
-                g_playerBase[slot].charId = charId;
+                net_apply_char_id(slot, charId);
                 /* Also update decoration table so host has it for START_GAME */
                 *(int *)(g_netPlayerDecorations + slot * NET_DECO_STRIDE + NET_DECO_LOBBYCHAR) = (int)charId;
 

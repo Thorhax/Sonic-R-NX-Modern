@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include <stdlib.h>   /* abort() — see assert_may_send */
 #include <errno.h>
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
 #include <sys/types.h>   /* ssize_t (MinGW provides this on Windows too) */
 
 #ifdef _WIN32
@@ -372,6 +375,20 @@ int net_register_client(int slot)
     return slot;
 }
 
+#ifdef __SWITCH__
+static int switch_directed_broadcast(uint32_t *out)
+{
+    u32 ip = 0, mask = 0, gateway = 0, dns1 = 0, dns2 = 0;
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) return -1;
+    rc = nifmGetCurrentIpConfigInfo(&ip, &mask, &gateway, &dns1, &dns2);
+    nifmExit();
+    if (R_FAILED(rc) || mask == 0) return -1;
+    *out = (uint32_t)((ip & mask) | ~mask);
+    return 0;
+}
+#endif
+
 int net_discover_send(int port)
 {
     /* Create a temporary broadcast socket */
@@ -402,6 +419,18 @@ int net_discover_send(int port)
     wl32(_mbuf, NET_DISCOVER_MAGIC);
     ssize_t n = sendto(s_discoverSocket, _mbuf, 4, 0,
                         (struct sockaddr *)&bcast_addr, sizeof(bcast_addr));
+#ifdef __SWITCH__
+    /* Some Wi-Fi routers drop 255.255.255.255 from wireless clients. Also send to the
+     * interface's directed subnet broadcast address (e.g. 192.168.1.255). */
+    uint32_t directed_addr = 0;
+    if (switch_directed_broadcast(&directed_addr) == 0 &&
+        directed_addr != INADDR_BROADCAST) {
+        bcast_addr.sin_addr.s_addr = directed_addr;
+        ssize_t n2 = sendto(s_discoverSocket, _mbuf, 4, 0,
+                            (struct sockaddr *)&bcast_addr, sizeof(bcast_addr));
+        if (n2 > 0) n = n2;
+    }
+#endif
     return (n > 0) ? 0 : -1;
 }
 
